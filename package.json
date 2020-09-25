@@ -1,0 +1,21 @@
+{
+  "name": "bitvault",
+  "version": "1.0.0",
+  "description": "BitLocker utility for Linux",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node loader.js",
+    "start": "electron ."
+  },
+  "keywords": [
+    "bitlocker"
+  ],
+  "author": "Kenny Joseph",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^10.1.2",
+    "node-sass": "^4.14.1"
+  },
+  "dependencies": {}
+}

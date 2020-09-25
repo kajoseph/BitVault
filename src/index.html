@@ -1,0 +1,131 @@
+<html>
+  <head>
+    <link rel="stylesheet" types="text/css" href="styles/style.css" /> 
+  </head>
+  <body>
+    <div class='main'>
+
+      <div class='error'>
+        <div id='error-global'></div>
+      </div>
+      <!-- Drives list -->
+      <h2>BitLocker Drives</h2>
+      <table class='table'>
+        <tbody id='tblBody'></tbody>
+      </table>
+
+      <button onclick='alert("creating...")'>Create</button>
+      <!-- The Modal -->
+      <div id='mount-modal' class='modal'>
+
+        <!-- Modal content -->
+        <div class='modal-content'>
+          <div class='modal-header'>
+            <span class='close' onclick='closeModal()'>&times;</span>
+            <h4>Unlock BitLocker Drive</h4>
+          </div>
+          <div class='modal-body'>
+            <div><input id='blPass' type='password' placeholder='BitLocker password'></input></div>
+            <div><button onclick='beginMount()'>Unlock</button></div>
+            <div id='modal-error'></div>
+          </div>
+          <div class='modal-footer'>
+            <div>Note: You will be asked to enter your sudo password</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script type='text/javascript' src="bitlocker.js"></script>
+    <script type='text/javascript'>
+      function refreshDrives() {
+        const drives = getLsblk();
+      
+        let html = '';
+        for (let drive of drives) {
+          html += `
+            <tr class='parent-row'>
+              <td class='parent-row-type'>Drive</td>
+              <td>${drive.name}</td>
+              <td>${drive.path}</td>
+              <td>${drive.model || ''}</td>
+              <td style='text-align:right'>${drive.size}</td>
+              <td></td>
+            </tr>
+          `;
+
+          for (let child of drive.children) {
+            html += `
+              <tr class='child-row'>
+                <td class='child-row-type'>Partition</td>
+                <td>${child.name}</td>
+                <td>${child.path}</td>
+                <td>${child.partlabel || ''}</td>
+                <td style='text-align:right'>${child.size}</td>
+                <td style='text-align:center'><button onclick='${child.mounted ? `handleUnmount("${child.name}")` : `openModal("${child.path}")`}'>${child.mounted ? 'Lock' : 'Unlock'}</button></td>
+              </tr>
+            `;
+          }
+          html += `
+            <br />
+            <br />
+          `;
+        }
+
+        document.getElementById('tblBody').innerHTML = html;
+      }
+
+      refreshDrives();
+
+      let currentPath = null;
+      function openModal(path) {
+        currentPath = path;
+        const modal = document.getElementById('mount-modal');
+        modal.style.display = 'block';
+
+        window.onclick = function(event) {
+          if (event.target == modal) {
+            modal.style.display = 'none';
+          }
+        }
+
+        document.getElementById('blPass').onkeydown = (evt) => {
+          if (evt.key.toLowerCase() === 'enter') {
+            beginMount();
+          }
+        }
+      }
+
+      function closeModal() {
+        currentPath = null;
+        document.getElementById('modal-error').innerText = '';
+        const modal = document.getElementById('mount-modal');
+        modal.style.display = 'none';
+      }
+
+      function beginMount() {
+        const mError = document.getElementById('modal-error');
+        mError.innerText = '';
+
+        const blPassword = document.getElementById('blPass');
+        const err = mount(currentPath, blPassword.value);
+        mError.innerText = err;
+        refreshDrives();
+
+        if (!err) {
+          closeModal();
+        }
+      }
+
+      function handleUnmount(name) {
+        const err = unmount(name);
+        if (err) {
+          const eDiv = document.getElementById('error-global');
+          eDiv.innerText = err;
+        }
+        refreshDrives();
+      }
+    </script>
+  </body>
+</html>
